@@ -94,7 +94,7 @@
     }
 
     // 4. Load GeoJSON
-    fetch('data/kinshasa_healthcare_full.geojson')
+    fetch('data/kinshasa_health_full.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
