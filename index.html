@@ -1,473 +1,146 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description"
-    content="WebGIS application displaying healthcare facilities in Kinshasa, Democratic Republic of the Congo." />
-  <title>Kinshasa Healthcare Facilities — WebGIS</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebGIS Fasilitas Kesehatan - Kinshasa, DRC</title>
 
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
-    /* ── Reset & Base ───────────────────────────────── */
-    *,
-    *::before,
-    *::after {
+    body,
+    html {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
       height: 100%;
-      font-family: 'Inter', sans-serif;
-      background: #0f1117;
-      color: #e2e8f0;
+      font-family: Arial, sans-serif;
     }
 
-    /* ── Layout ─────────────────────────────────────── */
-    #app {
-      display: flex;
-      flex-direction: column;
+    #map {
+      width: 100%;
       height: 100vh;
     }
 
-    /* ── Header ─────────────────────────────────────── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.65rem 1.25rem;
-      background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
-      border-bottom: 1px solid rgba(99, 179, 237, 0.15);
+    .info-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
       z-index: 1000;
-      flex-shrink: 0;
-    }
-
-    header .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    header .brand .icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      background: white;
+      padding: 10px 15px;
       border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+    }
+
+    .legend-item {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+      margin: 4px 0;
     }
 
-    header .brand h1 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      background: linear-gradient(90deg, #e2e8f0, #93c5fd);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    header .meta {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      font-size: 0.78rem;
-      color: #94a3b8;
-    }
-
-    header .meta .badge {
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      color: #7dd3fc;
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-      transition: background 0.3s;
-    }
-
-    /* ── Map Container ──────────────────────────────── */
-    #map {
-      flex: 1;
-      z-index: 1;
-    }
-
-    /* ── Loading Overlay ────────────────────────────── */
-    #loading-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 2000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(15, 17, 23, 0.92);
-      backdrop-filter: blur(6px);
-      transition: opacity 0.5s, visibility 0.5s;
-    }
-
-    #loading-overlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    .spinner {
-      width: 44px;
-      height: 44px;
-      border: 3px solid rgba(99, 179, 237, 0.15);
-      border-top-color: #38bdf8;
+    .legend-color {
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 1rem;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    #loading-overlay p {
-      font-size: 0.85rem;
-      color: #94a3b8;
-      letter-spacing: 0.03em;
-    }
-
-    /* ── Leaflet Popup Overrides ─────────────────────── */
-    .leaflet-popup-content-wrapper {
-      background: #1e293b !important;
-      color: #e2e8f0 !important;
-      border-radius: 10px !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(99, 179, 237, 0.12) !important;
-      padding: 0 !important;
-      overflow: hidden;
-    }
-
-    .leaflet-popup-tip {
-      background: #1e293b !important;
-    }
-
-    .leaflet-popup-content {
-      margin: 0 !important;
-      font-family: 'Inter', sans-serif !important;
-      font-size: 0.82rem !important;
-      line-height: 1.5 !important;
-      max-height: 320px;
-      overflow-y: auto;
-    }
-
-    .leaflet-popup-content::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    .leaflet-popup-content::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .leaflet-popup-content::-webkit-scrollbar-thumb {
-      background: rgba(99, 179, 237, 0.25);
-      border-radius: 999px;
-    }
-
-    .popup-header {
-      padding: 0.65rem 0.85rem;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.1));
-      border-bottom: 1px solid rgba(99, 179, 237, 0.12);
-      font-weight: 600;
-      font-size: 0.88rem;
-      color: #7dd3fc;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .popup-body {
-      padding: 0.55rem 0.85rem 0.75rem;
-    }
-
-    .popup-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.3rem 0;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
-    }
-
-    .popup-row:last-child {
-      border-bottom: none;
-    }
-
-    .popup-key {
-      color: #94a3b8;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      flex-shrink: 0;
-      margin-right: 0.75rem;
-    }
-
-    .popup-val {
-      text-align: right;
-      color: #e2e8f0;
-      font-weight: 500;
-      word-break: break-word;
-    }
-
-    /* ── Leaflet Control Overrides (dark theme) ──────── */
-    .leaflet-control-zoom a,
-    .leaflet-control-layers {
-      background: #1e293b !important;
-      color: #e2e8f0 !important;
-      border-color: rgba(99, 179, 237, 0.15) !important;
-    }
-
-    .leaflet-control-zoom a:hover {
-      background: #334155 !important;
-    }
-
-    .leaflet-control-layers-expanded {
-      padding: 8px 12px !important;
-      font-family: 'Inter', sans-serif !important;
-      font-size: 0.82rem !important;
-    }
-
-    .leaflet-control-attribution {
-      background: rgba(30, 41, 59, 0.85) !important;
-      color: #94a3b8 !important;
-      font-size: 0.7rem !important;
-    }
-
-    .leaflet-control-attribution a {
-      color: #7dd3fc !important;
-    }
-
-    /* ── Responsive ──────────────────────────────────── */
-    @media (max-width: 640px) {
-      header {
-        padding: 0.5rem 0.75rem;
-      }
-
-      header .brand h1 {
-        font-size: 0.88rem;
-      }
-
-      header .meta .coordinates {
-        display: none;
-      }
+      margin-right: 8px;
     }
   </style>
 </head>
 
 <body>
 
-  <div id="app">
-    <!-- Header -->
-    <header>
-      <div class="brand">
-        <div class="icon">🏥</div>
-        <h1>Kinshasa Healthcare Facilities</h1>
-      </div>
-      <div class="meta">
-        <span class="coordinates">📍 4.44°S, 15.26°E</span>
-        <span id="feature-count" class="badge">Loading…</span>
-      </div>
-    </header>
-
-    <!-- Map -->
-    <div id="map"></div>
-  </div>
-
-  <!-- Loading Overlay -->
-  <div id="loading-overlay">
-    <div class="spinner"></div>
-    <p>Loading healthcare data&hellip;</p>
+  <div id="map"></div>
+  <div class="info-panel">
+    <b>🏥 Fasilitas Kesehatan Kinshasa</b>
+    <div class="legend-item"><span class="legend-color" style="background:#e74c3c;"></span> Rumah Sakit (Hospital)</div>
+    <div class="legend-item"><span class="legend-color" style="background:#3498db;"></span> Klinik / Puskesmas</div>
+    <div class="legend-item"><span class="legend-color" style="background:#2ecc71;"></span> Apotek / Farmasi</div>
+    <div class="legend-item"><span class="legend-color" style="background:#f39c12;"></span> Lainnya</div>
   </div>
 
   <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    (function () {
-      'use strict';
+    // 1. Inisialisasi Peta
+    const map = L.map('map').setView([-4.4419, 15.2663], 12);
 
-      // ── Map Initialisation ──────────────────────────────────
-      const map = L.map('map', {
-        center: [-4.44, 15.26],
-        zoom: 12,
-        zoomControl: true
+    // 2. Basemap OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 3. Fungsi Filter & Warna
+    function getHealthcareType(props) {
+      const h = (props.healthcare || '').toLowerCase();
+      const a = (props.amenity || '').toLowerCase();
+      if (h.includes('hospital') || a === 'hospital') return 'hospital';
+      if (h.includes('clinic') || h.includes('health_centre') || a === 'clinic') return 'clinic';
+      if (h.includes('pharmacy') || a === 'pharmacy') return 'pharmacy';
+      return 'other';
+    }
+
+    function getColor(type) {
+      if (type === 'hospital') return '#e74c3c';
+      if (type === 'clinic') return '#3498db';
+      if (type === 'pharmacy') return '#2ecc71';
+      return '#f39c12';
+    }
+
+    function isHealthcare(props) {
+      return props.healthcare || ['hospital', 'clinic', 'pharmacy', 'doctors', 'dentist', 'nursing_home'].includes(props.amenity);
+    }
+
+    // 4. Load GeoJSON
+    fetch('data/Kinshasa_Healthcare_Facilities.geojson')
+      .then(res => res.json())
+      .then(data => {
+        L.geoJSON(data, {
+          filter: (feature) => isHealthcare(feature.properties),
+
+          pointToLayer: (feature, latlng) => {
+            return L.circleMarker(latlng, {
+              radius: 6,
+              fillColor: getColor(getHealthcareType(feature.properties)),
+              color: '#ffffff',
+              weight: 1.5,
+              opacity: 1,
+              fillOpacity: 0.85
+            });
+          },
+
+          style: (feature) => ({
+            color: getColor(getHealthcareType(feature.properties)),
+            weight: 2,
+            fillColor: getColor(getHealthcareType(feature.properties)),
+            fillOpacity: 0.3
+          }),
+
+          onEachFeature: (feature, layer) => {
+            const props = feature.properties;
+            const type = getHealthcareType(props);
+            const typeName = type === 'hospital' ? 'Rumah Sakit' : type === 'clinic' ? 'Klinik' : type === 'pharmacy' ? 'Apotek' : 'Fasilitas Kesehatan';
+
+            let popupContent = `<b>${typeName}</b><br>`;
+            if (props.name) popupContent += `📍 Nama: ${props.name}<br>`;
+            if (props.operator) popupContent += `🏢 Operator: ${props.operator}<br>`;
+            if (props.phone) popupContent += `📞 Telepon: ${props.phone}<br>`;
+            if (props.opening_hours) popupContent += ` Jam: ${props.opening_hours}<br>`;
+            if (props.addr_street) popupContent += `🛣️ Jalan: ${props.addr_street}`;
+
+            layer.bindPopup(popupContent);
+          }
+        }).addTo(map);
+
+        console.log('✅ Data fasilitas kesehatan berhasil dimuat!');
+      })
+      .catch(err => {
+        console.error('❌ Gagal memuat data:', err);
+        alert('Gagal memuat data GeoJSON. Pastikan file ada di folder data/');
       });
-
-      // ── Basemap Layers ──────────────────────────────────────
-      const osmStandard = L.tileLayer(
-        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }
-      ).addTo(map);
-
-      const osmHot = L.tileLayer(
-        'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-        {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors — Tiles: <a href="https://hot.openstreetmap.org/">HOT</a>'
-        }
-      );
-
-      const baseMaps = {
-        'OSM Standard': osmStandard,
-        'OSM Humanitarian': osmHot
-      };
-
-      // ── Helper: readable label ──────────────────────────────
-      function formatKey(key) {
-        return key
-          .replace(/_/g, ' ')
-          .replace(/\b\w/g, function (c) { return c.toUpperCase(); });
-      }
-
-      // ── Important properties to show first ──────────────────
-      const priorityKeys = [
-        'name', 'amenity', 'healthcare', 'health_facility_type',
-        'health_facility_level', 'operator', 'operator_type',
-        'opening_hours', 'emergency', 'capacity',
-        'health_facility_bed', 'staff_count_doctors', 'staff_count_nurses',
-        'addr_street', 'addr_housenumber', 'building'
-      ];
-
-      // ── Build popup HTML ────────────────────────────────────
-      function buildPopup(properties) {
-        var title = properties.name || properties.amenity || properties.healthcare || 'Healthcare Facility';
-        var html = '<div class="popup-header">🏥 ' + title + '</div>';
-        html += '<div class="popup-body">';
-
-        var shown = {};
-
-        // Priority keys first
-        for (var i = 0; i < priorityKeys.length; i++) {
-          var k = priorityKeys[i];
-          if (properties[k] !== null && properties[k] !== undefined && properties[k] !== '') {
-            html += '<div class="popup-row">'
-              + '<span class="popup-key">' + formatKey(k) + '</span>'
-              + '<span class="popup-val">' + properties[k] + '</span>'
-              + '</div>';
-            shown[k] = true;
-          }
-        }
-
-        // Remaining non-null keys
-        var keys = Object.keys(properties);
-        for (var j = 0; j < keys.length; j++) {
-          var key = keys[j];
-          if (shown[key]) continue;
-          if (key === 'osm_id' || key === 'osm_type') continue; // skip internal ids
-          var val = properties[key];
-          if (val !== null && val !== undefined && val !== '') {
-            html += '<div class="popup-row">'
-              + '<span class="popup-key">' + formatKey(key) + '</span>'
-              + '<span class="popup-val">' + val + '</span>'
-              + '</div>';
-          }
-        }
-
-        html += '</div>';
-        return html;
-      }
-
-      // ── Style for polygon / polyline features ───────────────
-      function featureStyle() {
-        return {
-          color: '#38bdf8',
-          weight: 1.5,
-          opacity: 0.85,
-          fillColor: '#818cf8',
-          fillOpacity: 0.3
-        };
-      }
-
-      // ── Custom circle-marker for point features ─────────────
-      function pointToLayer(feature, latlng) {
-        return L.circleMarker(latlng, {
-          radius: 7,
-          fillColor: '#38bdf8',
-          color: '#1e293b',
-          weight: 2,
-          opacity: 1,
-          fillOpacity: 0.85
-        });
-      }
-
-      // ── onEachFeature — bind popup ──────────────────────────
-      function onEachFeature(feature, layer) {
-        if (feature.properties) {
-          layer.bindPopup(buildPopup(feature.properties), {
-            maxWidth: 320,
-            minWidth: 220,
-            className: ''
-          });
-
-          // Subtle hover highlight
-          layer.on('mouseover', function () {
-            if (typeof layer.setStyle === 'function') {
-              layer.setStyle({ fillOpacity: 0.55, weight: 2.5 });
-            }
-          });
-          layer.on('mouseout', function () {
-            if (typeof layer.setStyle === 'function') {
-              geojsonLayer.resetStyle(layer);
-            }
-          });
-        }
-      }
-
-      // ── Load GeoJSON ────────────────────────────────────────
-      var geojsonLayer;
-
-      fetch('data/Kinshasa_Healthcare_Facilities.geojson')
-        .then(function (res) {
-          if (!res.ok) throw new Error('Failed to load GeoJSON: ' + res.statusText);
-          return res.json();
-        })
-        .then(function (data) {
-          geojsonLayer = L.geoJSON(data, {
-            style: featureStyle,
-            pointToLayer: pointToLayer,
-            onEachFeature: onEachFeature
-          }).addTo(map);
-
-          // Feature count badge
-          var count = data.features ? data.features.length : 0;
-          document.getElementById('feature-count').textContent = count.toLocaleString() + ' features';
-
-          // Layer control
-          var overlays = { 'Healthcare Facilities': geojsonLayer };
-          L.control.layers(baseMaps, overlays, { collapsed: true }).addTo(map);
-
-          // Hide loader
-          document.getElementById('loading-overlay').classList.add('hidden');
-        })
-        .catch(function (err) {
-          console.error(err);
-          document.getElementById('loading-overlay').innerHTML =
-            '<p style="color:#f87171;">⚠ ' + err.message + '</p>';
-        });
-    })();
   </script>
-
 </body>
 
 </html>
