@@ -4,75 +4,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebGIS Fasilitas Kesehatan - Kinshasa, DRC</title>
+  <title>WebGIS Fasilitas Kesehatan & Mpox - Kinshasa, DRC</title>
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
-    body,
-    html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: Arial, sans-serif;
-    }
-
-    #map {
-      width: 100%;
-      height: 100vh;
-    }
-
+    body, html { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; }
+    #map { width: 100%; height: 100vh; }
+    
+    /* Info Panel (Legend) */
     .info-panel {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-      font-size: 14px;
+      position: absolute; top: 10px; right: 10px; z-index: 1000;
+      background: white; padding: 10px 15px; border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-size: 13px;
+      max-width: 220px;
     }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin: 4px 0;
-    }
-
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
+    .legend-title { font-weight: bold; margin-bottom: 8px; display: block; }
+    .legend-section { margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee; }
+    .legend-item { display: flex; align-items: center; margin: 3px 0; }
+    .legend-color { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; display: inline-block; }
+    .legend-mpox { width: 16px; height: 16px; border: 2px solid #990000; border-radius: 50%; margin-right: 8px; display: inline-block; }
+    
+    /* Popup styling */
+    .leaflet-popup-content-wrapper { font-size: 13px; }
+    .popup-mpox { border-left: 4px solid #ff0000; padding-left: 8px; }
+    .popup-faskes { border-left: 4px solid #3498db; padding-left: 8px; }
   </style>
 </head>
 
 <body>
-
   <div id="map"></div>
+  
+  <!-- Legend Panel -->
   <div class="info-panel">
-    <b>🏥 Fasilitas Kesehatan Kinshasa</b>
-    <div class="legend-item"><span class="legend-color" style="background:#e74c3c;"></span> Rumah Sakit (Hospital)</div>
+    <span class="legend-title">🏥 Fasilitas Kesehatan</span>
+    <div class="legend-item"><span class="legend-color" style="background:#e74c3c;"></span> Rumah Sakit</div>
     <div class="legend-item"><span class="legend-color" style="background:#3498db;"></span> Klinik / Puskesmas</div>
     <div class="legend-item"><span class="legend-color" style="background:#2ecc71;"></span> Apotek / Farmasi</div>
     <div class="legend-item"><span class="legend-color" style="background:#f39c12;"></span> Lainnya</div>
+    
+    <div class="legend-section">
+      <span class="legend-title">🦠 Kasus Mpox (2024)</span>
+      <div class="legend-item"><span class="legend-mpox" style="background:rgba(255,0,0,0.6);"></span> 5 kasus (Limete)</div>
+      <div class="legend-item"><span class="legend-mpox" style="background:rgba(255,0,0,0.4);"></span> 1-2 kasus</div>
+    </div>
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     // 1. Inisialisasi Peta
-    const map = L.map('map').setView([-4.4419, 15.2663], 12);
+    const map = L.map('map').setView([-4.39, 15.30], 12);
 
     // 2. Basemap OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 3. Fungsi Filter & Warna
+    // 3. Fungsi Filter & Warna untuk Faskes
     function getHealthcareType(props) {
       const h = (props.healthcare || '').toLowerCase();
       const a = (props.amenity || '').toLowerCase();
@@ -90,16 +80,15 @@
     }
 
     function isHealthcare(props) {
-      return props.healthcare || ['hospital', 'clinic', 'pharmacy', 'doctors', 'dentist', 'nursing_home'].includes(props.amenity);
+      return props.healthcare || ['hospital','clinic','pharmacy','doctors','dentist','nursing_home'].includes(props.amenity);
     }
 
-    // 4. Load GeoJSON
+    // 4. Load GeoJSON Fasilitas Kesehatan
     fetch('data/kinshasa_health_full.geojson')
       .then(res => res.json())
       .then(data => {
         L.geoJSON(data, {
           filter: (feature) => isHealthcare(feature.properties),
-
           pointToLayer: (feature, latlng) => {
             return L.circleMarker(latlng, {
               radius: 6,
@@ -110,37 +99,72 @@
               fillOpacity: 0.85
             });
           },
-
           style: (feature) => ({
             color: getColor(getHealthcareType(feature.properties)),
             weight: 2,
             fillColor: getColor(getHealthcareType(feature.properties)),
             fillOpacity: 0.3
           }),
-
           onEachFeature: (feature, layer) => {
             const props = feature.properties;
             const type = getHealthcareType(props);
             const typeName = type === 'hospital' ? 'Rumah Sakit' : type === 'clinic' ? 'Klinik' : type === 'pharmacy' ? 'Apotek' : 'Fasilitas Kesehatan';
-
-            let popupContent = `<b>${typeName}</b><br>`;
+            
+            let popupContent = `<div class="popup-faskes"><b>${typeName}</b><br>`;
             if (props.name) popupContent += `📍 Nama: ${props.name}<br>`;
             if (props.operator) popupContent += `🏢 Operator: ${props.operator}<br>`;
             if (props.phone) popupContent += `📞 Telepon: ${props.phone}<br>`;
-            if (props.opening_hours) popupContent += ` Jam: ${props.opening_hours}<br>`;
+            if (props.opening_hours) popupContent += `🕒 Buka: ${props.opening_hours}<br>`;
             if (props.addr_street) popupContent += `🛣️ Jalan: ${props.addr_street}`;
-
+            popupContent += `</div>`;
+            
             layer.bindPopup(popupContent);
           }
         }).addTo(map);
-
         console.log('✅ Data fasilitas kesehatan berhasil dimuat!');
       })
+      .catch(err => console.error('❌ Gagal memuat faskes:', err));
+
+    // 5. 🔥 LOAD DATA MPOX (LAYER BARU) 🔥
+    fetch('data/kinshasa_mpox_2024.geojson')
+      .then(res => res.json())
+      .then(mpoxData => {
+        L.geoJSON(mpoxData, {
+          pointToLayer: (feature, latlng) => {
+            const cases = feature.properties.cases;
+            // Radius proporsional: 1 kasus = 8px, maks 40px
+            const radius = Math.min(cases * 8, 40);
+            
+            return L.circleMarker(latlng, {
+              radius: radius,
+              fillColor: '#ff0000',
+              color: '#990000',
+              weight: 2,
+              opacity: 0.9,
+              fillOpacity: 0.5
+            });
+          },
+          onEachFeature: (feature, layer) => {
+            const props = feature.properties;
+            const popupContent = `
+              <div class="popup-mpox">
+                <b>🦠 Kasus Mpox - ${props.name}</b><br>
+                <hr style="margin:6px 0; border:0; border-top:1px solid #eee;">
+                <b>Jumlah Kasus:</b> ${props.cases}<br>
+                <b>Clade Virus:</b> ${props.clade}<br>
+                <b>Info:</b> ${props.info}<br>
+                <small style="color:#666;">Periode: Juli-Agustus 2024<br>Sumber: Eurosurveillance 2024</small>
+              </div>
+            `;
+            layer.bindPopup(popupContent);
+          }
+        }).addTo(map);
+        console.log('✅ Data Mpox berhasil dimuat!');
+      })
       .catch(err => {
-        console.error('❌ Gagal memuat data:', err);
-        alert('Gagal memuat data GeoJSON. Pastikan file ada di folder data/');
+        console.warn('⚠️ Data Mpox tidak ditemukan (opsional):', err);
+        // Tidak error fatal, karena layer ini opsional
       });
   </script>
 </body>
-
 </html>
