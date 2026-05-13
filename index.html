@@ -7,254 +7,244 @@
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- MarkerCluster CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    
+    body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow: hidden; }
     #map { width: 100%; height: 100vh; }
     
-    /* Header Stats */
+    /* --- HEADER STATISTIK --- */
     .header-stats {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 12px 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-      display: flex;
-      gap: 20px;
-      color: white;
-      font-size: 14px;
+      position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 10px 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      display: flex; gap: 25px; color: white; font-size: 14px;
+      backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2);
+      transition: transform 0.3s ease;
     }
-    .stat-item {
-      text-align: center;
-      padding: 0 10px;
-      border-right: 1px solid rgba(255,255,255,0.3);
-    }
+    .header-stats:hover { transform: translateX(-50%) scale(1.02); }
+    .stat-item { text-align: center; padding: 0 10px; border-right: 1px solid rgba(255,255,255,0.3); }
     .stat-item:last-child { border-right: none; }
-    .stat-value { font-size: 20px; font-weight: bold; }
-    .stat-label { font-size: 11px; opacity: 0.9; }
+    .stat-value { font-size: 22px; font-weight: bold; margin-bottom: 2px; }
+    .stat-label { font-size: 11px; opacity: 0.9; text-transform: uppercase; letter-spacing: 0.5px; }
     
-    /* Control Panel */
+    /* --- PANEL KONTROL --- */
     .control-panel {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      max-width: 280px;
-      font-size: 13px;
+      position: absolute; top: 15px; right: 15px; z-index: 1000;
+      background: white; padding: 20px; border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2); max-width: 280px;
+      font-size: 13px; max-height: 85vh; overflow-y: auto;
+      transition: transform 0.3s ease;
     }
-    .control-title {
-      font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 12px;
-      color: #333;
-      border-bottom: 2px solid #667eea;
-      padding-bottom: 8px;
-    }
-    .filter-group { margin-bottom: 12px; }
-    .filter-label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #555;
-    }
-    .filter-item {
-      display: flex;
-      align-items: center;
-      margin: 4px 0;
-      cursor: pointer;
-    }
-    .filter-item input { margin-right: 8px; cursor: pointer; }
-    .color-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 8px;
+    .panel-title {
+      font-weight: 700; font-size: 16px; margin-bottom: 15px; color: #333;
+      border-bottom: 2px solid #667eea; padding-bottom: 8px;
+      display: flex; align-items: center; gap: 8px;
     }
     
     /* Search Box */
     .search-box {
-      width: 100%;
-      padding: 8px;
-      border: 2px solid #ddd;
-      border-radius: 6px;
-      font-size: 13px;
-      margin-bottom: 12px;
+      width: 100%; padding: 10px 12px; border: 2px solid #eee;
+      border-radius: 8px; font-size: 13px; margin-bottom: 15px;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
-    .search-box:focus {
-      outline: none;
-      border-color: #667eea;
-    }
+    .search-box:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.2); }
     
-    /* Legend */
-    .legend-section {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #eee;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin: 5px 0;
-      cursor: pointer;
-    }
-    .legend-item:hover { opacity: 0.7; }
-    .mpox-circle {
-      width: 18px;
-      height: 18px;
-      border: 2px solid #990000;
-      border-radius: 50%;
-      margin-right: 8px;
-      display: inline-block;
-    }
+    /* Filter & Legend */
+    .filter-group { margin-bottom: 15px; }
+    .filter-label { display: block; font-weight: 600; margin-bottom: 8px; color: #555; font-size: 12px; text-transform: uppercase; }
+    .filter-item { display: flex; align-items: center; margin: 6px 0; cursor: pointer; transition: background 0.2s; padding: 4px; border-radius: 4px; }
+    .filter-item:hover { background: #f0f2f5; }
+    .filter-item input { margin-right: 10px; cursor: pointer; width: 16px; height: 16px; accent-color: #667eea; }
+    .color-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 10px; border: 1px solid rgba(0,0,0,0.1); }
     
-    /* Popup Styling */
-    .leaflet-popup-content-wrapper {
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
-    .popup-header {
-      font-weight: bold;
-      font-size: 15px;
-      margin-bottom: 8px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid #667eea;
-    }
-    .popup-row {
-      margin: 4px 0;
-      font-size: 13px;
-    }
-    .popup-label {
-      font-weight: 600;
-      color: #666;
-    }
-    .mpox-popup { border-left: 4px solid #e74c3c; padding-left: 10px; }
-    .faskes-popup { border-left: 4px solid #3498db; padding-left: 10px; }
+    .legend-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; }
+    .legend-item { display: flex; align-items: center; margin: 6px 0; }
+    .mpox-circle { width: 16px; height: 16px; border: 2px solid #990000; border-radius: 50%; margin-right: 10px; display: inline-block; }
     
-    /* Loading */
+    /* Buttons */
+    .btn-group { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-action {
+      flex: 1; padding: 10px; border: none; border-radius: 8px;
+      cursor: pointer; font-weight: 600; transition: transform 0.2s, opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 12px;
+    }
+    .btn-action:hover { transform: translateY(-2px); opacity: 0.95; }
+    .btn-chart { background: #4CAF50; color: white; }
+    .btn-print { background: #333; color: white; }
+    .btn-reset { background: #667eea; color: white; margin-top: 10px; width: 100%; }
+    
+    /* Chart Panel */
+    #chartPanel {
+      position: absolute; bottom: 20px; left: 20px; z-index: 1000;
+      background: white; padding: 15px; border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2); width: 300px;
+      display: none; animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* About Modal */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6); z-index: 2000;
+      justify-content: center; align-items: center; animation: fadeIn 0.2s ease;
+    }
+    .modal.show { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal-content {
+      background: white; padding: 25px; border-radius: 16px;
+      max-width: 450px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      position: relative; animation: slideDown 0.3s ease;
+    }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    .modal-close {
+      position: absolute; top: 12px; right: 15px; font-size: 24px;
+      cursor: pointer; color: #666; transition: color 0.2s;
+    }
+    .modal-close:hover { color: #333; }
+    .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; color: #333; }
+    .modal-row { margin: 8px 0; font-size: 14px; }
+    .modal-label { font-weight: 600; color: #666; display: inline-block; width: 100px; }
+    
+    /* Loading Screen */
     .loading {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
       z-index: 9999;
     }
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #667eea;
-      border-radius: 50%;
+    .spinner {
+      width: 50px; height: 50px; border: 5px solid #ddd;
+      border-top: 5px solid #667eea; border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
+    /* Popup Styling */
+    .leaflet-popup-content-wrapper { border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+    .popup-header {
+      font-weight: bold; font-size: 15px; margin-bottom: 10px;
+      padding-bottom: 8px; border-bottom: 2px solid #eee;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .popup-row { margin: 6px 0; font-size: 13px; line-height: 1.4; }
+    .popup-label { font-weight: 600; color: #666; }
+    .popup-highlight { background: #fff3cd; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+    .mpox-popup { border-left: 4px solid #e74c3c; padding-left: 12px; }
+    .faskes-popup { border-left: 4px solid #3498db; padding-left: 12px; }
+    
+    /* Marker Hover Animation */
+    .leaflet-interactive { transition: filter 0.2s, transform 0.2s; }
+    .leaflet-interactive:hover { filter: brightness(1.1); transform: scale(1.1); }
+    
+    /* Keyboard Hint */
+    .kbd-hint {
+      position: absolute; bottom: 15px; right: 15px; z-index: 1000;
+      background: rgba(255,255,255,0.95); padding: 6px 12px;
+      border-radius: 20px; font-size: 11px; color: #666;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .kbd { background: #eee; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-family: monospace; }
+    
+    /* Print Styles */
+    @media print {
+      .control-panel, .header-stats, #loading, #chartPanel, .kbd-hint, .modal { display: none !important; }
+      #map { height: 100vh !important; }
+      body { background: white; }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
-      .header-stats {
-        flex-direction: column;
-        gap: 8px;
-        padding: 10px;
-        font-size: 12px;
-      }
+      .header-stats { flex-wrap: wrap; padding: 8px 12px; gap: 12px; width: 95%; font-size: 11px; }
       .stat-value { font-size: 16px; }
-      .control-panel {
-        max-width: 90%;
-        right: 5px;
-        left: 5px;
-      }
+      .control-panel { right: 10px; left: 10px; max-width: 100%; max-height: 70vh; }
+      #chartPanel { width: 90%; left: 5%; bottom: 70px; }
+      .kbd-hint { display: none; }
     }
   </style>
 </head>
+
 <body>
+
   <!-- Loading Screen -->
   <div id="loading" class="loading">
-    <div>
-      <div class="loading-spinner"></div>
-      <p style="color: white; margin-top: 10px; text-align: center;">Loading WebGIS...</p>
-    </div>
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; color: #666; font-weight: 500;">Memuat WebGIS Kinshasa...</p>
   </div>
 
-  <!-- Header Stats -->
+  <!-- Header Statistics -->
   <div class="header-stats">
-    <div class="stat-item">
-      <div class="stat-value" id="total-faskes">0</div>
-      <div class="stat-label">Fasilitas Kesehatan</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" id="total-hospital">0</div>
-      <div class="stat-label">Rumah Sakit</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" id="total-clinic">0</div>
-      <div class="stat-label">Klinik</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" id="total-pharmacy">0</div>
-      <div class="stat-label">Apotek</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value" id="total-mpox">0</div>
-      <div class="stat-label">Kasus Mpox</div>
-    </div>
+    <div class="stat-item"><div class="stat-value" id="total-faskes">0</div><div class="stat-label">Total Faskes</div></div>
+    <div class="stat-item"><div class="stat-value" id="total-hospital">0</div><div class="stat-label">Rumah Sakit</div></div>
+    <div class="stat-item"><div class="stat-value" id="total-clinic">0</div><div class="stat-label">Klinik</div></div>
+    <div class="stat-item"><div class="stat-value" id="total-pharmacy">0</div><div class="stat-label">Apotek</div></div>
+    <div class="stat-item"><div class="stat-value" id="total-mpox">0</div><div class="stat-label">Kasus Mpox</div></div>
   </div>
 
   <!-- Control Panel -->
   <div class="control-panel">
-    <div class="control-title">🎛️ Kontrol Peta</div>
+    <div class="panel-title">🎛️ Kontrol Peta</div>
     
     <!-- Search -->
-    <input type="text" id="searchBox" class="search-box" placeholder="🔍 Cari fasilitas kesehatan...">
+    <input type="text" id="searchBox" class="search-box" placeholder="🔍 Cari fasilitas... (tekan /)">
     
     <!-- Filters -->
     <div class="filter-group">
-      <span class="filter-label">🏥 Filter Fasilitas:</span>
-      <label class="filter-item">
-        <input type="checkbox" id="chkHospital" checked onchange="toggleLayer('hospital')">
-        <span class="color-dot" style="background:#e74c3c;"></span> Rumah Sakit
-      </label>
-      <label class="filter-item">
-        <input type="checkbox" id="chkClinic" checked onchange="toggleLayer('clinic')">
-        <span class="color-dot" style="background:#3498db;"></span> Klinik / Puskesmas
-      </label>
-      <label class="filter-item">
-        <input type="checkbox" id="chkPharmacy" checked onchange="toggleLayer('pharmacy')">
-        <span class="color-dot" style="background:#2ecc71;"></span> Apotek / Farmasi
-      </label>
-      <label class="filter-item">
-        <input type="checkbox" id="chkOther" checked onchange="toggleLayer('other')">
-        <span class="color-dot" style="background:#f39c12;"></span> Lainnya
-      </label>
+      <span class="filter-label">Filter Fasilitas:</span>
+      <label class="filter-item"><input type="checkbox" id="chkHospital" checked onchange="toggleLayer('hospital')"><span class="color-dot" style="background:#e74c3c;"></span>Rumah Sakit</label>
+      <label class="filter-item"><input type="checkbox" id="chkClinic" checked onchange="toggleLayer('clinic')"><span class="color-dot" style="background:#3498db;"></span>Klinik</label>
+      <label class="filter-item"><input type="checkbox" id="chkPharmacy" checked onchange="toggleLayer('pharmacy')"><span class="color-dot" style="background:#2ecc71;"></span>Apotek</label>
+      <label class="filter-item"><input type="checkbox" id="chkOther" checked onchange="toggleLayer('other')"><span class="color-dot" style="background:#f39c12;"></span>Lainnya</label>
     </div>
     
     <!-- Legend -->
     <div class="legend-section">
-      <div class="control-title"> Kasus Mpox (2024)</div>
-      <div class="legend-item">
-        <span class="mpox-circle" style="background:rgba(231,76,60,0.8); width:24px; height:24px;"></span>
-        5 kasus (Limete)
-      </div>
-      <div class="legend-item">
-        <span class="mpox-circle" style="background:rgba(231,76,60,0.5);"></span>
-        1-2 kasus
+      <div class="panel-title" style="margin-bottom:10px; font-size:14px;">🦠 Kasus Mpox (2024)</div>
+      <div class="legend-item"><span class="mpox-circle" style="background:rgba(231,76,60,0.8); width:24px; height:24px;"></span>5 kasus (Limete)</div>
+      <div class="legend-item"><span class="mpox-circle" style="background:rgba(231,76,60,0.5);"></span>1-2 kasus</div>
+    </div>
+
+    <!-- Action Buttons -->
+    <button class="btn-action btn-reset" onclick="resetView()">🎯 Reset View</button>
+    <div class="btn-group">
+      <button class="btn-action btn-chart" onclick="toggleChart()">📊 Analitik</button>
+      <button class="btn-action btn-print" onclick="window.print()">🖨️ Export</button>
+    </div>
+    <button class="btn-action" style="background:#667eea; color:white; margin-top:8px;" onclick="showAbout()">ℹ️ Tentang Proyek</button>
+  </div>
+
+  <!-- Chart Panel -->
+  <div id="chartPanel">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span style="font-weight:bold; font-size:14px;">Analisis Distribusi</span>
+      <button onclick="toggleChart()" style="background:none; border:none; cursor:pointer; font-size:18px; color:#666;">✕</button>
+    </div>
+    <canvas id="facilityChart"></canvas>
+  </div>
+
+  <!-- Keyboard Hint -->
+  <div class="kbd-hint">Tekan <span class="kbd">/</span> untuk cari cepat</div>
+
+  <!-- About Modal -->
+  <div id="aboutModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" onclick="hideAbout()">&times;</span>
+      <div class="modal-title">🗺️ Tentang Proyek Ini</div>
+      <div class="modal-row"><span class="modal-label">Nama:</span> Abdul Hafiz Atallah</div>
+      <div class="modal-row"><span class="modal-label">NIM:</span> 1232002036</div>
+      <div class="modal-row"><span class="modal-label">Mata Kuliah:</span> Kapita Selekta SI</div>
+      <div class="modal-row"><span class="modal-label">Kota:</span> Kinshasa, DRC</div>
+      <div class="modal-row"><span class="modal-label">Dataset:</span> OSM + Eurosurveillance 2024</div>
+      <div class="modal-row"><span class="modal-label">Teknologi:</span> Leaflet.js, Chart.js, Vercel</div>
+      <div style="margin-top:15px; padding-top:12px; border-top:1px solid #eee; font-size:12px; color:#666;">
+        WebGIS ini dibuat untuk analisis distribusi fasilitas kesehatan dalam konteks respons wabah Mpox 2024.
       </div>
     </div>
   </div>
@@ -267,176 +257,163 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
   
   <script>
-    // Global variables
-    let markerClusters = null;
-    let mpoxLayer = null;
-    let allMarkers = [];
-    let visibleTypes = { hospital: true, clinic: true, pharmacy: true, other: true };
+    // Global Variables
+    let markerClusters = null, mpoxLayer = null, allMarkers = [], visibleTypes = { hospital: true, clinic: true, pharmacy: true, other: true };
+    let stats = { total: 0, hospital: 0, clinic: 0, pharmacy: 0, other: 0 };
+    let mpoxPoints = []; // Store Mpox coordinates for proximity calculation
 
-    // Initialize map
+    // 1. Initialize Map
     const map = L.map('map').setView([-4.39, 15.30], 12);
     
-    // Basemap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19
-    }).addTo(map);
+    // 2. Basemaps
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '© Esri' });
+    const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '© CartoDB' });
+    osm.addTo(map);
+    L.control.layers({ '🗺️ Peta Jalan': osm, '🛰️ Satelit': satellite, '🌙 Gelap': dark }, null, { position: 'bottomleft' }).addTo(map);
 
-    // Helper functions
+    // Helper Functions
     function getHealthcareType(props) {
-      const h = (props.healthcare || '').toLowerCase();
-      const a = (props.amenity || '').toLowerCase();
+      const h = (props.healthcare || '').toLowerCase(), a = (props.amenity || '').toLowerCase();
       if (h.includes('hospital') || a === 'hospital') return 'hospital';
       if (h.includes('clinic') || h.includes('health_centre') || a === 'clinic') return 'clinic';
       if (h.includes('pharmacy') || a === 'pharmacy') return 'pharmacy';
       return 'other';
     }
-
-    function getColor(type) {
-      const colors = { hospital: '#e74c3c', clinic: '#3498db', pharmacy: '#2ecc71', other: '#f39c12' };
-      return colors[type] || '#f39c12';
+    function getColor(type) { return { hospital: '#e74c3c', clinic: '#3498db', pharmacy: '#2ecc71', other: '#f39c12' }[type] || '#f39c12'; }
+    function isHealthcare(props) { return props.healthcare || ['hospital','clinic','pharmacy','doctors','dentist','nursing_home'].includes(props.amenity); }
+    
+    // Calculate distance between two points (Haversine formula - simplified)
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return (R * c).toFixed(1);
     }
 
-    function isHealthcare(props) {
-      return props.healthcare || ['hospital','clinic','pharmacy','doctors','dentist','nursing_home'].includes(props.amenity);
-    }
-
-    // Statistics counters
-    const stats = { total: 0, hospital: 0, clinic: 0, pharmacy: 0, other: 0 };
-
-    // Create marker with popup
-    function createMarker(feature, latlng) {
-      const type = getHealthcareType(feature.properties);
-      const color = getColor(type);
-      const props = feature.properties;
-      
-      const marker = L.circleMarker(latlng, {
-        radius: 7,
-        fillColor: color,
-        color: '#fff',
-        weight: 2,
-        opacity: 1,
-        fillOpacity: 0.85,
-        'data-type': type
-      });
-
-      // Build popup content
-      const typeName = { hospital: 'Rumah Sakit', clinic: 'Klinik', pharmacy: 'Apotek', other: 'Fasilitas Kesehatan' }[type];
-      let popupHTML = `<div class="faskes-popup"><div class="popup-header">🏥 ${typeName}</div>`;
-      if (props.name) popupHTML += `<div class="popup-row"><span class="popup-label">Nama:</span> ${props.name}</div>`;
-      if (props.operator) popupHTML += `<div class="popup-row"><span class="popup-label">Operator:</span> ${props.operator}</div>`;
-      if (props.phone) popupHTML += `<div class="popup-row"><span class="popup-label">Telepon:</span> ${props.phone}</div>`;
-      if (props.opening_hours) popupHTML += `<div class="popup-row"><span class="popup-label">Jam Buka:</span> ${props.opening_hours}</div>`;
-      if (props.addr_street) popupHTML += `<div class="popup-row"><span class="popup-label">Alamat:</span> ${props.addr_street}</div>`;
-      popupHTML += `</div>`;
-
-      marker.bindPopup(popupHTML);
-      
-      // Update stats
-      stats.total++;
-      stats[type]++;
-      allMarkers.push({ marker, type, name: (props.name || '').toLowerCase(), element: marker });
-      
-      return marker;
-    }
-
-    // Load Healthcare Facilities with Clustering
+    // 3. Load Facilities Data
     fetch('data/kinshasa_health_full.geojson')
       .then(res => res.json())
       .then(data => {
-        markerClusters = L.markerClusterGroup({
-          maxClusterRadius: 50,
-          spiderfyOnMaxZoom: true,
-          showCoverageOnHover: false,
-          zoomToBoundsOnClick: true
-        });
+        markerClusters = L.markerClusterGroup({ maxClusterRadius: 50, spiderfyOnMaxZoom: true, showCoverageOnHover: false, zoomToBoundsOnClick: true });
 
         L.geoJSON(data, {
           filter: (feature) => isHealthcare(feature.properties),
-          pointToLayer: createMarker
-        }).addTo(markerClusters);
+          pointToLayer: (feature, latlng) => {
+            const type = getHealthcareType(feature.properties);
+            const marker = L.circleMarker(latlng, {
+              radius: 7, fillColor: getColor(type), color: '#fff', weight: 2, fillOpacity: 0.9, 'data-type': type
+            });
 
+            stats.total++; stats[type]++;
+            allMarkers.push({ marker, type, name: (feature.properties.name || '').toLowerCase(), lat: latlng.lat, lng: latlng.lng });
+            
+            // Enhanced Popup with Proximity to Mpox
+            const typeName = { hospital: 'Rumah Sakit', clinic: 'Klinik', pharmacy: 'Apotek', other: 'Fasilitas Kesehatan' }[type];
+            let popupHTML = `<div class="faskes-popup"><div class="popup-header">🏥 ${typeName}</div>`;
+            if (feature.properties.name) popupHTML += `<div class="popup-row"><span class="popup-label">Nama:</span> ${feature.properties.name}</div>`;
+            if (feature.properties.operator) popupHTML += `<div class="popup-row"><span class="popup-label">Operator:</span> ${feature.properties.operator}</div>`;
+            if (feature.properties.phone) popupHTML += `<div class="popup-row"><span class="popup-label">Telepon:</span> ${feature.properties.phone}</div>`;
+            
+            // Add proximity hint if Mpox data loaded
+            if (mpoxPoints.length > 0) {
+              let minDist = 999, nearest = '';
+              mpoxPoints.forEach(mp => {
+                const d = getDistance(latlng.lat, latlng.lng, mp.lat, mp.lng);
+                if (d < minDist) { minDist = d; nearest = mp.name; }
+              });
+              if (minDist < 5) popupHTML += `<div class="popup-row"><span class="popup-label">⚠️ Jarak ke kasus Mpox:</span> <span class="popup-highlight">${minDist} km (${nearest})</span></div>`;
+            }
+            popupHTML += `</div>`;
+            marker.bindPopup(popupHTML);
+            return marker;
+          }
+        }).addTo(markerClusters);
         markerClusters.addTo(map);
         
-        // Update statistics
-        document.getElementById('total-faskes').textContent = stats.total.toLocaleString();
-        document.getElementById('total-hospital').textContent = stats.hospital.toLocaleString();
-        document.getElementById('total-clinic').textContent = stats.clinic.toLocaleString();
-        document.getElementById('total-pharmacy').textContent = stats.pharmacy.toLocaleString();
+        document.getElementById('total-faskes').textContent = stats.total;
+        document.getElementById('total-hospital').textContent = stats.hospital;
+        document.getElementById('total-clinic').textContent = stats.clinic;
+        document.getElementById('total-pharmacy').textContent = stats.pharmacy;
         
-        console.log('✅ Facilities loaded:', stats);
+        renderChart();
+        checkLoading();
       })
-      .catch(err => console.error('❌ Error loading facilities:', err));
+      .catch(err => { console.error('Error facilities:', err); checkLoading(); });
 
-    // Load Mpox Data
+    // 4. Load Mpox Data
     fetch('data/kinshasa_mpox_2024.geojson')
       .then(res => res.json())
-      .then(mpoxData => {
-        mpoxLayer = L.geoJSON(mpoxData, {
+      .then(data => {
+        mpoxLayer = L.geoJSON(data, {
           pointToLayer: (feature, latlng) => {
-            const cases = feature.properties.cases;
-            const radius = Math.min(cases * 10, 50);
-            
-            return L.circleMarker(latlng, {
-              radius: radius,
-              fillColor: '#e74c3c',
-              color: '#990000',
-              weight: 3,
-              opacity: 0.9,
-              fillOpacity: 0.5
-            });
+            const radius = Math.min(feature.properties.cases * 10, 50);
+            return L.circleMarker(latlng, { radius, fillColor: '#e74c3c', color: '#990000', weight: 2, fillOpacity: 0.5 });
           },
           onEachFeature: (feature, layer) => {
-            const props = feature.properties;
-            const popupHTML = `
-              <div class="mpox-popup">
-                <div class="popup-header">🦠 Kasus Mpox - ${props.name}</div>
-                <div class="popup-row"><span class="popup-label">Jumlah Kasus:</span> <strong>${props.cases}</strong></div>
-                <div class="popup-row"><span class="popup-label">Clade Virus:</span> ${props.clade}</div>
-                <div class="popup-row"><span class="popup-label">Info:</span> ${props.info}</div>
-                <div style="margin-top:8px; font-size:11px; color:#666;">Periode: Juli-Agustus 2024<br>Sumber: Eurosurveillance 2024</div>
-              </div>
-            `;
-            layer.bindPopup(popupHTML);
+            mpoxPoints.push({ name: feature.properties.name, lat: feature.geometry.coordinates[1], lng: feature.geometry.coordinates[0] });
+            layer.bindPopup(`<div class="mpox-popup"><div class="popup-header">🦠 Kasus Mpox - ${feature.properties.name}</div><div class="popup-row"><span class="popup-label">Jumlah:</span> <strong>${feature.properties.cases}</strong></div><div class="popup-row"><span class="popup-label">Info:</span> ${feature.properties.info}</div></div>`);
           }
         }).addTo(map);
-
-        document.getElementById('total-mpox').textContent = mpoxData.features.length;
-        document.getElementById('loading').style.display = 'none';
+        document.getElementById('total-mpox').textContent = data.features.length;
+        checkLoading();
       })
-      .catch(err => {
-        console.warn('⚠️ Mpox data not found:', err);
-        document.getElementById('loading').style.display = 'none';
-      });
+      .catch(err => { console.error('Error mpox:', err); checkLoading(); });
 
-    // Toggle layer visibility
+    // 5. Utility Functions
+    function checkLoading() { setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 1000); }
+    
     function toggleLayer(type) {
       visibleTypes[type] = document.getElementById('chk' + type.charAt(0).toUpperCase() + type.slice(1)).checked;
-      
       if (markerClusters) {
         markerClusters.clearLayers();
-        
-        allMarkers.forEach(item => {
-          if (visibleTypes[item.type]) {
-            markerClusters.addLayer(item.marker);
-          }
-        });
-        
+        allMarkers.forEach(item => { if (visibleTypes[item.type]) markerClusters.addLayer(item.marker); });
         map.addLayer(markerClusters);
       }
     }
+    
+    function toggleChart() {
+      const panel = document.getElementById('chartPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    function renderChart() {
+      const ctx = document.getElementById('facilityChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Rumah Sakit', 'Klinik', 'Apotek', 'Lainnya'],
+          datasets: [{ data: [stats.hospital, stats.clinic, stats.pharmacy, stats.other], backgroundColor: ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'], borderWidth: 0 }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } } }, cutout: '60%' }
+      });
+    }
+    
+    function resetView() { map.setView([-4.39, 15.30], 12); }
+    
+    function showAbout() { document.getElementById('aboutModal').classList.add('show'); }
+    function hideAbout() { document.getElementById('aboutModal').classList.remove('show'); }
+    
+    // Close modal when clicking outside
+    document.getElementById('aboutModal').addEventListener('click', (e) => { if (e.target.id === 'aboutModal') hideAbout(); });
 
-    // Search functionality
+    // 6. Search + Keyboard Shortcut
     document.getElementById('searchBox').addEventListener('input', function(e) {
       const query = e.target.value.toLowerCase();
-      
       if (query.length < 2) return;
-      
       const found = allMarkers.find(item => item.name.includes(query));
-      if (found && visibleTypes[found.type]) {
-        map.setView(found.marker.getLatLng(), 16);
-        found.marker.openPopup();
+      if (found && visibleTypes[found.type]) { map.setView(found.marker.getLatLng(), 16); found.marker.openPopup(); }
+    });
+    
+    // Keyboard shortcut: press '/' to focus search
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.getElementById('searchBox').focus();
       }
+      if (e.key === 'Escape') { hideAbout(); if (document.getElementById('chartPanel').style.display === 'block') toggleChart(); }
     });
   </script>
 </body>
