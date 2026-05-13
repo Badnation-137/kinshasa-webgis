@@ -191,9 +191,6 @@
   <div class="control-panel">
     <div class="panel-title">🎛️ Kontrol Peta</div>
     
-    <!-- Search -->
-    <input type="text" id="searchBox" class="search-box" placeholder="🔍 Cari fasilitas... (tekan /)">
-    
     <!-- Filters -->
     <div class="filter-group">
       <span class="filter-label">Filter Fasilitas:</span>
@@ -227,9 +224,6 @@
     </div>
     <canvas id="facilityChart"></canvas>
   </div>
-
-  <!-- Keyboard Hint -->
-  <div class="kbd-hint">Tekan <span class="kbd">/</span> untuk cari cepat</div>
 
   <!-- About Modal -->
   <div id="aboutModal" class="modal">
@@ -398,22 +392,6 @@
     // Close modal when clicking outside
     document.getElementById('aboutModal').addEventListener('click', (e) => { if (e.target.id === 'aboutModal') hideAbout(); });
 
-    // 6. Search + Keyboard Shortcut
-    document.getElementById('searchBox').addEventListener('input', function(e) {
-      const query = e.target.value.toLowerCase();
-      if (query.length < 2) return;
-      const found = allMarkers.find(item => item.name.includes(query));
-      if (found && visibleTypes[found.type]) { map.setView(found.marker.getLatLng(), 16); found.marker.openPopup(); }
-    });
-    
-    // Keyboard shortcut: press '/' to focus search
-    document.addEventListener('keydown', (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
-        e.preventDefault();
-        document.getElementById('searchBox').focus();
-      }
-      if (e.key === 'Escape') { hideAbout(); if (document.getElementById('chartPanel').style.display === 'block') toggleChart(); }
-    });
   </script>
 </body>
 </html>
