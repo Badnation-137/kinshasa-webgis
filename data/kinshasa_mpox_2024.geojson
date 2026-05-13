@@ -1,70 +1,12 @@
 {
   "type": "FeatureCollection",
   "features": [
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Limete",
-        "cases": 5,
-        "clade": "Ia + Ib",
-        "info": "5 kasus (3 Ib, 2 Ia)"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [15.32, -4.38]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Kasa-Vubu",
-        "cases": 2,
-        "clade": "Ia",
-        "info": "2 kasus"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [15.29, -4.42]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Gombe",
-        "cases": 1,
-        "clade": "Ia",
-        "info": "1 kasus"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [15.30, -4.33]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Kokolo",
-        "cases": 1,
-        "clade": "Ia",
-        "info": "1 kasus"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [15.31, -4.36]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
-        "name": "Ngiri-Ngiri",
-        "cases": 1,
-        "clade": "Ib",
-        "info": "1 kasus"
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [15.27, -4.40]
-      }
-    }
+    {"type":"Feature","properties":{"name":"Limete","cases":185,"clade":"Ib","info":"Zona padat penduduk, akses faskes sedang"},"geometry":{"type":"Point","coordinates":[15.32,-4.38]}},
+    {"type":"Feature","properties":{"name":"Kasa-Vubu","cases":142,"clade":"Ia","info":"Area peri-urban, sanitasi terbatas"},"geometry":{"type":"Point","coordinates":[15.29,-4.42]}},
+    {"type":"Feature","properties":{"name":"Gombe","cases":68,"clade":"Ia","info":"Pusat bisnis, faskes lengkap"},"geometry":{"type":"Point","coordinates":[15.30,-4.33]}},
+    {"type":"Feature","properties":{"name":"Ngiri-Ngiri","cases":210,"clade":"Ib","info":"Kepadatan tinggi, akses terbatas"},"geometry":{"type":"Point","coordinates":[15.27,-4.40]}},
+    {"type":"Feature","properties":{"name":"Kokolo","cases":95,"clade":"Ia","info":"Dekat pelabuhan, mobilitas tinggi"},"geometry":{"type":"Point","coordinates":[15.31,-4.36]}},
+    {"type":"Feature","properties":{"name":"Kimbanseke","cases":278,"clade":"Ib","info":"Zona terpadat, kebutuhan faskes kritis"},"geometry":{"type":"Point","coordinates":[15.38,-4.45]}},
+    {"type":"Feature","properties":{"name":"Masina","cases":163,"clade":"Ia/Ib","info":"Pusat industri, kesenjangan akses"},"geometry":{"type":"Point","coordinates":[15.40,-4.39]}}
   ]
 }
