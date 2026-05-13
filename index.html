@@ -140,8 +140,9 @@
     .faskes-popup { border-left: 4px solid #3498db; padding-left: 12px; }
     
     /* Marker Hover Animation */
-    .leaflet-interactive { transition: filter 0.2s, transform 0.2s; }
-    .leaflet-interactive:hover { filter: brightness(1.1); transform: scale(1.1); }
+    /* Marker Hover Animation - No Shift */
+    .leaflet-interactive { transition: filter 0.2s; }
+    .leaflet-interactive:hover { filter: brightness(1.15); cursor: pointer; }
     
     /* Keyboard Hint */
     .kbd-hint {
