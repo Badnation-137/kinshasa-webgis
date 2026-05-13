@@ -190,6 +190,7 @@
       <div class="panel-title" style="margin-bottom:10px; font-size:14px;">🦠 Kasus Mpox (2024)</div>
       <div class="legend-item"><span class="mpox-circle" style="background:rgba(231,76,60,0.8); width:24px; height:24px;"></span>Zona Risiko Tinggi</div>
       <div class="legend-item"><span class="mpox-circle" style="background:rgba(231,76,60,0.5);"></span>Zona Risiko Sedang</div>
+      <div style="font-size:10px; color:#666; margin-top:5px;">💡 Klik lingkaran merah untuk analisis zona</div>
     </div>
 
     <!-- Action Buttons -->
@@ -204,8 +205,8 @@
   <!-- Chart Panel -->
   <div id="chartPanel">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-      <span style="font-weight:bold; font-size:14px;">Analisis Distribusi</span>
-      <button onclick="toggleChart()" style="background:none; border:none; cursor:pointer; font-size:18px; color:#666;">✕</button>
+      <span id="chartTitle" style="font-weight:bold; font-size:14px;">Distribusi Global</span>
+      <button onclick="resetChart()" style="background:none; border:none; cursor:pointer; font-size:18px; color:#666;">✕</button>
     </div>
     <canvas id="facilityChart"></canvas>
   </div>
@@ -239,6 +240,8 @@
     let markerClusters = null, mpoxLayer = null, allMarkers = [], visibleTypes = { hospital: true, clinic: true, pharmacy: true, other: true };
     let stats = { total: 0, hospital: 0, clinic: 0, pharmacy: 0, other: 0 };
     let mpoxPoints = [];
+    let facilityChart = null;
+    let globalStats = {};
 
     // 1. Initialize Map
     const map = L.map('map').setView([-4.39, 15.30], 12);
@@ -301,7 +304,7 @@
                 const d = parseFloat(getDistance(latlng.lat, latlng.lng, mp.lat, mp.lng));
                 if (d < minDist) { minDist = d; nearest = mp.name; }
               });
-              if (minDist < 5) popupHTML += `<div class="popup-row"><span class="popup-label">⚠️ Jarak ke kasus Mpox:</span> <span class="popup-highlight">${minDist} km (${nearest})</span></div>`;
+              if (minDist < 5) popupHTML += `<div class="popup-row"><span class="popup-label">️ Jarak ke kasus Mpox:</span> <span class="popup-highlight">${minDist} km (${nearest})</span></div>`;
             }
             popupHTML += `</div>`;
             marker.bindPopup(popupHTML);
@@ -328,12 +331,22 @@
         mpoxLayer = L.geoJSON(data, {
           pointToLayer: (feature, latlng) => {
             const cases = feature.properties.cases || 10;
-            const radius = Math.min(cases * 0.5 + 10, 60); // Dynamic radius based on cases
+            const radius = Math.min(cases * 0.5 + 10, 60);
             return L.circleMarker(latlng, { radius, fillColor: '#e74c3c', color: '#990000', weight: 2, fillOpacity: 0.4 });
           },
           onEachFeature: (feature, layer) => {
             mpoxPoints.push({ name: feature.properties.name, lat: feature.geometry.coordinates[1], lng: feature.geometry.coordinates[0] });
             layer.bindPopup(`<div class="mpox-popup"><div class="popup-header">🦠 Kasus Mpox - ${feature.properties.name}</div><div class="popup-row"><span class="popup-label">Jumlah:</span> <strong>${feature.properties.cases}</strong></div><div class="popup-row"><span class="popup-label">Info:</span> ${feature.properties.info}</div></div>`);
+            
+            // CLICK EVENT FOR ANALYTICS
+            layer.on('click', function() {
+              if (allMarkers.length === 0) return;
+              const lat = feature.geometry.coordinates[1];
+              const lng = feature.geometry.coordinates[0];
+              const name = feature.properties.name;
+              // Analisis radius 2500 meter
+              analyzeZone(lat, lng, name, 2500);
+            });
           }
         }).addTo(map);
         document.getElementById('total-mpox').textContent = data.features.length;
@@ -357,14 +370,52 @@
     
     function renderChart() {
       const ctx = document.getElementById('facilityChart').getContext('2d');
-      new Chart(ctx, {
+      facilityChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['Rumah Sakit', 'Klinik', 'Apotek', 'Lainnya'],
+          labels: ['RS', 'Klinik', 'Apotek', 'Lainnya'],
           datasets: [{ data: [stats.hospital, stats.clinic, stats.pharmacy, stats.other], backgroundColor: ['#e74c3c', '#3498db', '#2ecc71', '#f39c12'], borderWidth: 0 }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: {size: 11} } } }, cutout: '60%' }
+        options: {
+          responsive: true,
+          plugins: {
+            title: { display: true, text: 'Distribusi Global Faskes Kinshasa', font: { size: 14, weight: 'bold' } },
+            legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10 } }
+          },
+          cutout: '60%'
+        }
       });
+      
+      // Save global stats for reset
+      globalStats = { ...stats };
+    }
+    
+    function analyzeZone(lat, lng, zoneName, radius) {
+      let counts = { hospital: 0, clinic: 0, pharmacy: 0, other: 0 };
+      const center = L.latLng(lat, lng);
+      
+      allMarkers.forEach(m => {
+        const dist = center.distanceTo(m.marker.getLatLng());
+        if (dist <= radius) {
+          counts[m.type]++;
+        }
+      });
+      
+      if (facilityChart) {
+        facilityChart.data.datasets[0].data = [counts.hospital, counts.clinic, counts.pharmacy, counts.other];
+        facilityChart.options.plugins.title.text = `Faskes di Zona ${zoneName} (Radius 2.5km)`;
+        facilityChart.update();
+      }
+      document.getElementById('chartPanel').style.display = 'block';
+    }
+    
+    function resetChart() {
+      if (facilityChart) {
+        facilityChart.data.datasets[0].data = [globalStats.hospital, globalStats.clinic, globalStats.pharmacy, globalStats.other];
+        facilityChart.options.plugins.title.text = 'Distribusi Global Faskes Kinshasa';
+        facilityChart.update();
+        document.getElementById('chartPanel').style.display = 'none';
+      }
     }
     
     function resetView() { map.setView([-4.39, 15.30], 12); }
